@@ -85,5 +85,6 @@
     <plugin name="phonegap-nfc" spec="^1.0.3" />
     <plugin name="cordova.plugin.glucosefreedom" spec="../plugins/GlucoseFreedom" />
     <plugin name="cordova-plugin-x-toast" spec="^2.7.0" />
+    <plugin name="cordova-plugin-vibration" spec="^3.1.0" />
     <engine name="android" spec="7.0.0" />
 </widget>

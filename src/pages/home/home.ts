@@ -4,6 +4,8 @@ import * as HighCharts from 'highcharts';
 import HighChartsMore from "highcharts/highcharts-more";
 import SolidGauge from 'highcharts/modules/solid-gauge';
 import { Toast } from '@ionic-native/toast';
+import { Vibration } from '@ionic-native/vibration';
+
 import * as highChartsUtils from "./highchartsUtils";
 import { NFC, Ndef } from '@ionic-native/nfc';
 
@@ -24,16 +26,11 @@ export class HomePage {
 	insulinChart; 
 	insulinGauge;
 
-	constructor(private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+	constructor(public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
 
 	}
 
 	ionViewDidLoad(){
-
-		this.toast.show("View loaded.","3000","center").subscribe((toast) => {
-			console.log("Toast shown - ");
-			console.log(toast);
-		})
 
 		HighCharts.setOptions(highChartsUtils.glucoseGraphTheme);
 
@@ -152,19 +149,36 @@ export class HomePage {
         }));
 
 		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
-			console.log("Read sensor..");
-			this.toast.show("Read Sensor "+sensor.tag.sensorID, '3000', 'center').subscribe((toast) => {
-				console.log("Sensor Toast shown - ");
-				console.log(toast);
-			});
 
-			// const toast = this.toast.create({
-			// 	message: "Read Sensor "+sensor.tag.sensorID,
-			// 	duration: 3000
-			// });
-			// toast.present();
+			console.log("Got sensor Data - writing to chart...");
+
+			this.updateCharts(sensor);
+
+			this.vibration.vibrate(1000);
 		});
+	}
 
+	updateCharts(sensor) {
+		var data = [];
+
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+
+		var i=0;
+		for(i=0;i<sensor.tag.dense.length;i++)
+			data.push([(sensor.tag.denseTimestamps[i]*1000)-timezoneOffset, sensor.tag.dense[i]]);
+		for(i=0;i<sensor.tag.sparse.length;i++)
+			data.push([(sensor.tag.sparseTimestamps[i]*1000)-timezoneOffset, sensor.tag.sparse[i]]);
+
+		data = data.sort((n1, n2) => n1[0]-n2[0]);
+
+		this.insulinChart.series[0].setData(data, true);
+		console.log("Updating gauge to ",Number.parseFloat(data[0][1]).toFixed(2));
+		var point = this.insulinGauge.series[0].points[0];
+		// console.log("Type of point.y - ",(typeof point.y));
+		// console.log("Type of our output - ", (typeof Number.parseFloat(data[0][1]).toFixed(2)));
+		// console.log("Type of data[0][1] - ", typeof data[0][1]);
+		point.update(Number.parseFloat(Number.parseFloat(data[0][1]).toFixed(2)));
+		// this.myGauge.series[0].points[0].update(Number.parseFloat(data[0][1]).toFixed(2));
 	}
 
 }

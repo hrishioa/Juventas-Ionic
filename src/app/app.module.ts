@@ -4,6 +4,7 @@ import { IonicApp, IonicErrorHandler, IonicModule } from 'ionic-angular';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 import { NFC, Ndef } from '@ionic-native/nfc';
+import { Vibration } from '@ionic-native/vibration';
 import { Toast } from '@ionic-native/toast';
 
 import { MyApp } from './app.component';
@@ -25,6 +26,7 @@ import { HomePage } from '../pages/home/home';
   ],
   providers: [
     Toast,
+    Vibration,
     NFC, Ndef, 
     StatusBar,
     SplashScreen,
