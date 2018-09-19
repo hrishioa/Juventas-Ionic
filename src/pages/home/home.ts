@@ -5,9 +5,12 @@ import HighChartsMore from "highcharts/highcharts-more";
 import SolidGauge from 'highcharts/modules/solid-gauge';
 import { Toast } from '@ionic-native/toast';
 import { Vibration } from '@ionic-native/vibration';
-
-import * as highChartsUtils from "./highchartsUtils";
+import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
+import { SQLitePorter } from '@ionic-native/sqlite-porter';
 import { NFC, Ndef } from '@ionic-native/nfc';
+import * as highChartsUtils from "./highchartsUtils";
+import { BehaviorSubject } from 'rxjs/Rx';
+import { Storage } from '@ionic/storage';
 
 declare var cordova: any;
 
@@ -25,13 +28,49 @@ export class HomePage {
 
 	insulinChart; 
 	insulinGauge;
+	database: SQLiteObject;
+	private databaseReady: BehaviorSubject<boolean>;
 
-	constructor(public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
-
+	constructor(private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+		this.databaseReady = new BehaviorSubject(false);
+		// this.platform.ready().then(() => this.createDatabase());
 	}
 
 	ionViewDidLoad(){
 
+		this.initCharts();
+
+		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
+			console.log("Got sensor Data - writing to chart...");
+			this.updateCharts(sensor);
+			this.vibration.vibrate(1000);
+		});
+	}
+
+	// initDatabase() {
+	// 	this.sqlite.create({
+	// 		name: 'developers.db',
+	// 		location: 'default'
+	// 	}).then((db: SQLiteObject) => {
+	// 		this.database = db;
+	// 		this.storage.get('database_created').then(val => {
+	// 			if(val) {
+	// 				console.log("Table already created.");
+	// 				this.databaseReady.next(true);
+	// 			} else {
+	// 				let create_code = "CREATE TABLE libreLogs (estTimeStamp INT, sensorID VARCHAR(12), gRaw INT, tRaw INT, gVal FLOAT, tVal FLOAT, type INT, readTime INT, sensorTime INT, drift INT DEFAULT 0)";
+	// 				this.sqlitePorter.importSqlToDb(this.database, create_code)
+	// 					.then(() =>  {
+	// 						console.log('Created Table.');
+	// 						console.log("Logging database...");
+	// 						this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
+	// 					}).catch(e => console.error(e));
+	// 			}
+	// 		});
+	// 	});
+	// }
+
+	initCharts() {
 		HighCharts.setOptions(highChartsUtils.glucoseGraphTheme);
 
 		this.insulinChart = HighCharts.chart('container', {
@@ -147,15 +186,6 @@ export class HomePage {
             	valueSuffix: ' mmol/L'
             } }]    
         }));
-
-		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
-
-			console.log("Got sensor Data - writing to chart...");
-
-			this.updateCharts(sensor);
-
-			this.vibration.vibrate(1000);
-		});
 	}
 
 	updateCharts(sensor) {
