@@ -78,7 +78,8 @@ export class HomePage {
 					this.databaseReady.next(true);
 				} else {
 					console.log("Creating table...");
-					let create_code = "CREATE TABLE libreLogs (estTimeStamp INT, sensorID VARCHAR(12), gRaw INT, tRaw INT, gVal FLOAT, tVal FLOAT, type INT, readTime INT, sensorTime INT, drift INT DEFAULT 0)";
+					let create_code = "CREATE TABLE libreLogs (estTimeStamp INT, sensorID VARCHAR(12), gRaw INT, tRaw INT, gVal FLOAT, tVal FLOAT, type INT, readTime INT, sensorTime INT, drift INT DEFAULT 0);";
+					create_code += "CREATE TABLE activityLogs (timeStamp INT, action VARCHAR(100), description VARCHAR(255))";
 					this.sqlitePorter.importSqlToDb(this.database, create_code).then(() =>  {
 						console.log('Created Table.');
 						this.storage.set('database_created',true);
@@ -174,19 +175,43 @@ export class HomePage {
 				zoomType: 'x'
 			},
 			title: {
-				text: 'Glucose Levels',
+				text: null,
 			},
-			subtitle: {
-				text: document.ontouchstart === undefined ?
-				'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-			},
+			// subtitle: {
+			// 	text: document.ontouchstart === undefined ?
+			// 	'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+			// },
 			xAxis: {
-				type: 'datetime'
+				type: 'datetime',
+				dateTimeLabelFormats: {
+					day: ""
+				},
+			    plotLines: [{
+					color: 'red', // Color value
+					value: 1537397316000, // Value of where the line will appear
+					width: 2, // Width of the line
+					label: { 
+   						text: 'I am a label', // Content of the label. 
+    					align: 'left', // Positioning of the label. 
+    					x: +10 // Amount of pixels the label will be repositioned according to the alignment. 
+  					}    
+				}]
 			},
 			yAxis: {
+				max:15,
+				min:0,
 				title: {
 					text: 'Glucose Value'
-				}
+				},
+				plotLines: [{
+					width:1,
+					color: 'green',
+					value: 6,
+				},{
+					width:1,
+					color: 'green',
+					value: 9,
+				}],
 			},
 			legend: {
 				enabled: false
@@ -222,7 +247,7 @@ export class HomePage {
 				type: 'line',
 				name: 'All',
 				data: [[1536938640, 9.412], [1536938580, 9.331], [1536938520, 9.301], [1536938460, 9.2], [1536938400, 9.17], [1536938340, 9.1], [1536938280, 9.13], [1536938248, 9.503], [1536938188, 9.452], [1536938128, 9.744], [1536938068, 9.593], [1536938008, 9.623], [1536937948, 9.865], [1536937888, 9.976], [1536937828, 9.825], [1536937768, 9.996], [1536937708, 9.956], [1536937648, 9.835], [1536937588, 9.734], [1536937528, 9.704]],
-				lineWidth: 3,
+				lineWidth: 2,
 				zones: [{
 					value: 4,
 					color: '#f7a35c'
@@ -284,7 +309,6 @@ export class HomePage {
 	}
 
 	updateCharts() {
-
 		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
 		var timeMin = Date.now()-timezoneOffset;
 
@@ -303,11 +327,16 @@ export class HomePage {
 
 		console.log("Chart setting is ",this.chartSetting,", Current time is ",Date.now()-timezoneOffset," looking for anything after ",timeMin);
 
+		console.log("yaxis - ",this.insulinChart.yAxis[0].addPlotLine);
+
 		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC",[timeMin]).then(data => {
 			console.log("Returned ",data.rows.length," rows");
 			for(var i=0;i<data.rows.length;i++) {
 				console.log(data.rows.item(i));
 			}
+
+			if(data.rows.length == 0)
+				return;
 
 			console.log("Updating charts...");
 
@@ -322,12 +351,62 @@ export class HomePage {
 			var point = this.insulinGauge.series[0].points[0];
 			point.update(Number.parseFloat(Number.parseFloat(data.rows.item(0).gVal).toFixed(2)));
 		});
+
+		var insulinLabel = false;
+		var foodLabel = false;
+
+		this.database.executeSql("SELECT * FROM activityLogs WHERE timeStamp >= ? ORDER BY timeStamp DESC", [timeMin]).then(data => {
+			console.log("Returned ",data.rows.length," activities.");
+
+			for(var i=0;i<data.rows.length;i++) {
+				var plotline = {
+					color: (data.rows.item(i).action == 'insulin' ? 'red':'green'),
+					width:2,
+					value:data.rows.item(i).timeStamp,
+					label: {
+						text: (
+								(!insulinLabel && data.rows.item(i).action == "insulin") || 
+								(!foodLabel && data.rows.item(i).action != "insulin")
+							) ? data.rows.item(i).action : "",
+						align: 'left',
+						x:10
+					}
+				};
+
+				if(data.rows.item(i).action == "insulin")
+					insulinLabel = true;
+				if(data.rows.item(i).action != "insulin")
+					foodLabel = true;
+
+				this.insulinChart.xAxis[0].addPlotLine(plotline);
+
+				console.log("Added plotline - ",plotline);
+			}
+		})
 	}
 
 	buttonTester() {
 		console.log("Logging database...");
 			this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
 
+	}
+
+	takeInsulin() {
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+		var insertSql = "INSERT INTO activityLogs(timeStamp, action, description) VALUES (?,?,?)";
+
+		this.database.executeSql(insertSql, [Date.now()-timezoneOffset, "insulin", ""]).then(data => {
+			this.toast.show("Logged Insulin",'1000','center').subscribe(console.log);
+		});
+	}
+
+	takeFood() {
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+		var insertSql = "INSERT INTO activityLogs(timeStamp, action, description) VALUES (?,?,?)";
+
+		this.database.executeSql(insertSql, [Date.now()-timezoneOffset, "food", ""]).then(data => {
+			this.toast.show("Logged Food",'1000','center').subscribe(console.log);
+		}).catch(err => console.log("Error - ",err));
 	}
 
 	wipeDb() {
