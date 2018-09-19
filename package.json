@@ -67,9 +67,9 @@
       "phonegap-nfc": {},
       "cordova-plugin-x-toast": {},
       "cordova-plugin-vibration": {},
-      "cordova.plugin.glucosefreedom": {},
       "uk.co.workingedge.cordova.plugin.sqliteporter": {},
-      "cordova-sqlite-storage": {}
+      "cordova-sqlite-storage": {},
+      "cordova.plugin.glucosefreedom": {}
     },
     "platforms": [
       "android"

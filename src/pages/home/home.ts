@@ -43,7 +43,7 @@ export class HomePage {
 
 		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
 			console.log("Got sensor Data - writing to chart...");
-			this.updateCharts(sensor);
+			this.writeToDatabase(sensor);
 			this.vibration.vibrate(1000);
 		});
 	}
@@ -66,11 +66,76 @@ export class HomePage {
 						this.storage.set('database_created',true);
 					}).catch(e => console.error(e));
 				}
-				console.log("Logging database...");
-					this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
-
 			});
 		});
+	}
+
+	writeToDatabase(sensor) {
+		if(sensor.tag == null || sensor.tag.denseGRaw == null || (sensor.tag.denseGRaw.length == 0 && sensor.tag.sparseGRaw.length == 0)) {
+			console.log("No sensor read.");
+			return;
+		}
+
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+
+		var insertSql = 'INSERT INTO libreLogs(estTimeStamp,sensorID,gRaw,tRaw,tVal,gVal,type,readTime,sensorTime,drift) VALUES (?,?,?,?,?,?,?,?,?,?)'
+
+		console.log("Got sensor data - ",sensor);
+
+		console.log("Writing data..");
+
+		var indices = []
+		for(var i=0;i<sensor.tag.denseGRaw.length;i++)
+			indices.push(i);
+
+		var promises = indices.map(index => {
+			if(sensor.tag.denseGRaw[index] == null)
+				return Promise.resolve();
+			var dataArray = [
+				   (sensor.tag.denseTimestamps[index]*1000)-timezoneOffset, 
+					sensor.tag.sensorID, 
+					sensor.tag.denseGRaw[index],
+					sensor.tag.denseTRaw[index],
+					sensor.tag.denseTVals[index],
+					sensor.tag.denseGVals[index],
+					0, // 0 is dense
+					sensor.tag.readTime,
+					sensor.tag.sensorTime,
+					0
+			];
+			console.log("Writing dense row - ", index," - ", dataArray);
+			return this.database.executeSql(insertSql, dataArray);
+		});
+
+		Promise.all(promises).then(() => console.log("Done writing dense rows."));
+
+		// We're possibly duplicating code to be safe; references in promises proved trickyt
+
+		indices = []
+		for(var i=0;i<sensor.tag.sparseGRaw.length;i++)
+			indices.push(i);
+
+		promises = indices.map(index => {
+			if(sensor.tag.sparseGRaw[index] == null)
+				return Promise.resolve();
+			var dataArray = [
+				   (sensor.tag.sparseTimestamps[index]*1000)-timezoneOffset, 
+					sensor.tag.sensorID, 
+					sensor.tag.sparseGRaw[index],
+					sensor.tag.sparseTRaw[index],
+					sensor.tag.sparseTVals[index],
+					sensor.tag.sparseGVals[index],
+					0, // 1 is sparse
+					sensor.tag.readTime,
+					sensor.tag.sensorTime,
+					0
+			];
+			console.log("Writing sparse row - ", index," - ", dataArray);
+			return this.database.executeSql(insertSql, dataArray);
+		});
+
+		Promise.all(promises).then(() => console.log("Done writing sparse rows."));
+
 	}
 
 	initCharts() {
@@ -208,6 +273,17 @@ export class HomePage {
 		console.log("Updating gauge to ",Number.parseFloat(data[0][1]).toFixed(2));
 		var point = this.insulinGauge.series[0].points[0];
 		point.update(Number.parseFloat(Number.parseFloat(data[0][1]).toFixed(2)));
+	}
+
+	buttonTester() {
+		console.log("Logging database...");
+			this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
+
+	}
+
+	wipeDb() {
+		this.sqlitePorter.wipeDb(this.database).then(() => console.log("Wiped database."));
+		this.storage.set('database_created',false);		
 	}
 
 }
