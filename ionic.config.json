@@ -1,0 +1,7 @@
+{
+  "name": "juventas",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "ionic-angular"
+}
