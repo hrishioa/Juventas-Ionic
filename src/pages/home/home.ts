@@ -11,6 +11,7 @@ import { NFC, Ndef } from '@ionic-native/nfc';
 import * as highChartsUtils from "./highchartsUtils";
 import { BehaviorSubject } from 'rxjs/Rx';
 import { Storage } from '@ionic/storage';
+import { Platform } from 'ionic-angular';
 
 declare var cordova: any;
 
@@ -31,9 +32,9 @@ export class HomePage {
 	database: SQLiteObject;
 	private databaseReady: BehaviorSubject<boolean>;
 
-	constructor(private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+	constructor(private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
 		this.databaseReady = new BehaviorSubject(false);
-		// this.platform.ready().then(() => this.createDatabase());
+		this.platform.ready().then(() => this.initDatabase());
 	}
 
 	ionViewDidLoad(){
@@ -47,28 +48,30 @@ export class HomePage {
 		});
 	}
 
-	// initDatabase() {
-	// 	this.sqlite.create({
-	// 		name: 'developers.db',
-	// 		location: 'default'
-	// 	}).then((db: SQLiteObject) => {
-	// 		this.database = db;
-	// 		this.storage.get('database_created').then(val => {
-	// 			if(val) {
-	// 				console.log("Table already created.");
-	// 				this.databaseReady.next(true);
-	// 			} else {
-	// 				let create_code = "CREATE TABLE libreLogs (estTimeStamp INT, sensorID VARCHAR(12), gRaw INT, tRaw INT, gVal FLOAT, tVal FLOAT, type INT, readTime INT, sensorTime INT, drift INT DEFAULT 0)";
-	// 				this.sqlitePorter.importSqlToDb(this.database, create_code)
-	// 					.then(() =>  {
-	// 						console.log('Created Table.');
-	// 						console.log("Logging database...");
-	// 						this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
-	// 					}).catch(e => console.error(e));
-	// 			}
-	// 		});
-	// 	});
-	// }
+	initDatabase() {
+		this.sqlite.create({
+			name: 'developers.db',
+			location: 'default'
+		}).then((db: SQLiteObject) => {
+			this.database = db;
+			this.storage.get('database_created').then(val => {
+				if(val) {
+					console.log("Table already created.");
+					this.databaseReady.next(true);
+				} else {
+					console.log("Creating table...");
+					let create_code = "CREATE TABLE libreLogs (estTimeStamp INT, sensorID VARCHAR(12), gRaw INT, tRaw INT, gVal FLOAT, tVal FLOAT, type INT, readTime INT, sensorTime INT, drift INT DEFAULT 0)";
+					this.sqlitePorter.importSqlToDb(this.database, create_code).then(() =>  {
+						console.log('Created Table.');
+						this.storage.set('database_created',true);
+					}).catch(e => console.error(e));
+				}
+				console.log("Logging database...");
+					this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
+
+			});
+		});
+	}
 
 	initCharts() {
 		HighCharts.setOptions(highChartsUtils.glucoseGraphTheme);
