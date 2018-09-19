@@ -174,11 +174,7 @@ export class HomePage {
 		this.insulinChart.series[0].setData(data, true);
 		console.log("Updating gauge to ",Number.parseFloat(data[0][1]).toFixed(2));
 		var point = this.insulinGauge.series[0].points[0];
-		// console.log("Type of point.y - ",(typeof point.y));
-		// console.log("Type of our output - ", (typeof Number.parseFloat(data[0][1]).toFixed(2)));
-		// console.log("Type of data[0][1] - ", typeof data[0][1]);
 		point.update(Number.parseFloat(Number.parseFloat(data[0][1]).toFixed(2)));
-		// this.myGauge.series[0].points[0].update(Number.parseFloat(data[0][1]).toFixed(2));
 	}
 
 }
