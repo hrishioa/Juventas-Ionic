@@ -44,7 +44,15 @@ export class HomePage {
 			}
 		});
 		this.databaseReady = new BehaviorSubject(false);
-		this.platform.ready().then(() => this.initDatabase()).then(() => this.updateCharts());
+		this.platform.ready().then(() => this.initDatabase())
+		.then(() => this.storage.get('chartSetting')).then(val => {
+			if(val) 
+				this.chartSetting = val;
+			else {
+				console.log("No chart set - default is day");
+				this.storage.set('chartSetting','day');
+			}
+		}).then(() => this.updateCharts());
 	}
 
 	ionViewDidLoad(){
