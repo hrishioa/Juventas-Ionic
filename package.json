@@ -61,9 +61,9 @@
       },
       "cordova-plugin-ionic-keyboard": {},
       "phonegap-nfc": {},
-      "cordova.plugin.glucosefreedom": {},
       "cordova-plugin-x-toast": {},
-      "cordova-plugin-vibration": {}
+      "cordova-plugin-vibration": {},
+      "cordova.plugin.glucosefreedom": {}
     },
     "platforms": [
       "android"
