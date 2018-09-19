@@ -6,6 +6,8 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { NFC, Ndef } from '@ionic-native/nfc';
 import { Vibration } from '@ionic-native/vibration';
 import { Toast } from '@ionic-native/toast';
+import { SQLitePorter } from '@ionic-native/sqlite-porter';
+import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
@@ -25,6 +27,7 @@ import { HomePage } from '../pages/home/home';
     HomePage
   ],
   providers: [
+    SQLite, SQLitePorter,
     Toast,
     Vibration,
     NFC, Ndef, 
