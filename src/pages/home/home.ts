@@ -29,12 +29,22 @@ export class HomePage {
 
 	insulinChart; 
 	insulinGauge;
+	private chartSetting: string;
 	database: SQLiteObject;
 	private databaseReady: BehaviorSubject<boolean>;
 
 	constructor(private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+		this.chartSetting = "day";
+		this.storage.get('chartSetting').then(val => {
+			if(val) 
+				this.chartSetting = val;
+			else {
+				console.log("No chart set - default is day");
+				this.storage.set('chartSetting','day');
+			}
+		});
 		this.databaseReady = new BehaviorSubject(false);
-		this.platform.ready().then(() => this.initDatabase());
+		this.platform.ready().then(() => this.initDatabase()).then(() => this.updateCharts());
 	}
 
 	ionViewDidLoad(){
@@ -49,7 +59,7 @@ export class HomePage {
 	}
 
 	initDatabase() {
-		this.sqlite.create({
+		return this.sqlite.create({
 			name: 'developers.db',
 			location: 'default'
 		}).then((db: SQLiteObject) => {
@@ -135,6 +145,8 @@ export class HomePage {
 		});
 
 		Promise.all(promises).then(() => console.log("Done writing sparse rows."));
+
+		this.updateCharts();
 
 	}
 
@@ -256,23 +268,52 @@ export class HomePage {
         }));
 	}
 
-	updateCharts(sensor) {
-		var data = [];
+	setChartSetting(setting) {
+		this.storage.set('chartSetting',setting);
+		this.chartSetting = setting;
+		console.log("called with ",setting, "Chart set to ",this.chartSetting,". Redrawing...");
+		this.updateCharts();
+	}
+
+	updateCharts() {
 
 		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+		var timeMin = Date.now()-timezoneOffset;
 
-		var i=0;
-		for(i=0;i<sensor.tag.dense.length;i++)
-			data.push([(sensor.tag.denseTimestamps[i]*1000)-timezoneOffset, sensor.tag.dense[i]]);
-		for(i=0;i<sensor.tag.sparse.length;i++)
-			data.push([(sensor.tag.sparseTimestamps[i]*1000)-timezoneOffset, sensor.tag.sparse[i]]);
+		if(this.chartSetting == "2min")
+			timeMin -=(1000*60*2);
+		else if(this.chartSetting == "5min")
+			timeMin -=(1000*60*5);
+		else if(this.chartSetting == "hour")
+			timeMin -=(1000*60*60);
+		else if(this.chartSetting == "day")
+			timeMin -=(1000*60*60*24);
+		else if(this.chartSetting == "week")
+			timeMin -=(1000*60*60*24*7);
+		else if(this.chartSetting == "month")
+			timeMin -=(1000*60*60*24*30);
 
-		data = data.sort((n1, n2) => n1[0]-n2[0]);
+		console.log("Chart setting is ",this.chartSetting,", Current time is ",Date.now()-timezoneOffset," looking for anything after ",timeMin);
 
-		this.insulinChart.series[0].setData(data, true);
-		console.log("Updating gauge to ",Number.parseFloat(data[0][1]).toFixed(2));
-		var point = this.insulinGauge.series[0].points[0];
-		point.update(Number.parseFloat(Number.parseFloat(data[0][1]).toFixed(2)));
+		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC",[timeMin]).then(data => {
+			console.log("Returned ",data.rows.length," rows");
+			for(var i=0;i<data.rows.length;i++) {
+				console.log(data.rows.item(i));
+			}
+
+			console.log("Updating charts...");
+
+			var chartData = []
+			for(var i=0;i<data.rows.length;i++) {
+				console.log("Row - ",i," - ",data.rows.item(i).estTimeStamp,", ",data.rows.item(i).gVal);
+				chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
+			}
+			chartData = chartData.sort((n1, n2) => n1[0]-n2[0]);
+			this.insulinChart.series[0].setData(chartData, true);
+
+			var point = this.insulinGauge.series[0].points[0];
+			point.update(Number.parseFloat(Number.parseFloat(data.rows.item(0).gVal).toFixed(2)));
+		});
 	}
 
 	buttonTester() {

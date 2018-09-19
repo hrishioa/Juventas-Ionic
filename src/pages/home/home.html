@@ -8,7 +8,7 @@
 
 <ion-content padding class="wrapper">
 	<button ion-button full (click)="buttonTester()">Spare button</button>
-	<button ion-button full (click)="wipeDb()">Wipe Database</button>
+	<button ion-button full (click)="updateCharts()">Wipe Database</button>
 	<ion-card class="card">
 		<ion-card-content>
 			<div id="container-gauge" style="width: 100%; height: 200px;"></div>
@@ -29,9 +29,9 @@
 			<div id="container" style="display: block;"	></div>
 		</ion-card-content>
 		<ion-item id="button-grid">
-			<button ion-button large class="button">Hour</button>
-			<button ion-button large class="button">Day</button>
-			<button ion-button large class="button">Week</button>
+			<button ion-button large class="button" (click)="setChartSetting('2min')">Hour</button>
+			<button ion-button large class="button" (click)="setChartSetting('5min')">Day</button>
+			<button ion-button large class="button" (click)="setChartSetting('hour')">Week</button>
 		</ion-item>
 	</ion-card>
 <!-- 	<button ion-button full (click)="startNFC()">Start NFC</button>
