@@ -1,3 +1,42 @@
-page-home {
+@import url('https://fonts.googleapis.com/css?family=Rajdhani:300,400,500,600,700');
+
+.wrapper {
+	background: linear-gradient(to bottom, #00b4db, #0083b0);
+	h1, h2, h3, h4, h5, h6, p, span {
+		font-family: 'Rajdhani', sans-serif;
+	}
+}
+
+.card {
+	border-radius: 16px;
+	margin-bottom: 24px;
+}
+
+.details {
+	display: flex;
+	justify-content: space-around;
+	div {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	h2 {
+		font-size: 40px;
+	}
+}
+
+.button {
+	border-radius: 200px;
+	background: #00a3cd;
+}
+
+#button-grid {
+	display: flex;
+	width: 100%;
+	justify-content: space-around;
+	.button {
+		width: 31%;
+		height: 40px;
+	}
 
 }

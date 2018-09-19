@@ -1,14 +1,42 @@
 <ion-header>
-  <ion-navbar>
-    <ion-title>
-      Ionic Blank
-    </ion-title>
-  </ion-navbar>
+<!-- 	<ion-navbar>
+		<ion-title>
+			Juventas 2
+		</ion-title>
+	</ion-navbar> -->
 </ion-header>
 
-<ion-content padding>
-  The world is your oyster.
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will be your guide.
-  </p>
+<ion-content padding class="wrapper">
+
+	<ion-card class="card">
+		<ion-card-content>
+			<div id="container-speed" style="width: 100%; height: 200px;"></div>
+			<div class="details">
+				<div>
+					<h2>4h</h2>
+					<span>since Insulin</span>
+				</div>
+				<div>
+					<h2>2h</h2>
+					<span>since last meal</span>
+				</div>
+			</div>
+		</ion-card-content>
+	</ion-card>
+
+	<ion-card class="card">
+		<ion-card-content>
+			<div id="container" style="display: block;"	></div>
+		</ion-card-content>
+		<ion-item id="button-grid">
+			<button ion-button large class="button">Hour</button>
+			<button ion-button large class="button">Day</button>
+			<button ion-button large class="button">Week</button>
+		</ion-item>
+	</ion-card>
+<!-- 	<button ion-button full (click)="showToast('Testing Toast')">check NFC</button>
+	<button ion-button full (click)="startNFC()">Start NFC</button>
+	<button ion-button full (click)="stopNFC()">Stop NFC</button>
+	<button ion-button full (click)="fireTimedEvents('Hey there')">Fire Timed Events</button>
+	<button ion-button full (click)="changeData()">Change Data</button> -->
 </ion-content>
