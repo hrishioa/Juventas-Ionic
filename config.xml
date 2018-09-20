@@ -86,7 +86,7 @@
     <plugin name="cordova-plugin-vibration" spec="^3.1.0" />
     <plugin name="uk.co.workingedge.cordova.plugin.sqliteporter" spec="^1.0.5" />
     <plugin name="cordova-sqlite-storage" spec="^2.4.0" />
-    <plugin name="cordova.plugin.glucosefreedom" spec="../plugins/GlucoseFreedom" />
     <plugin name="cordova-plugin-statusbar" spec="^2.4.2" />
+    <plugin name="cordova.plugin.glucosefreedom" spec="../plugins/GlucoseFreedom" />
     <engine name="android" spec="7.0.0" />
 </widget>

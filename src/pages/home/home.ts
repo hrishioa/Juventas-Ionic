@@ -60,13 +60,8 @@ export class HomePage {
 	}
 
 	ionViewDidLoad(){
-
-		// this.timeSinceInsulin = this.navParams.get('item').timeSinceInsulin;
 		this.statusBar.overlaysWebView(true);
-		// set status bar to white
 		this.statusBar.styleBlackTranslucent();
-		// this.statusBar.backgroundColorByHexString('#00b4db');
-
 
 		this.initCharts();
 
@@ -118,11 +113,14 @@ export class HomePage {
 		for(var i=0;i<sensor.tag.denseGRaw.length;i++)
 			indices.push(i);
 
+		var denseTimestamp = Date.now()-timezoneOffset;
+
 		var promises = indices.map(index => {
 			if(sensor.tag.denseGRaw[index] == null)
 				return Promise.resolve();
 			var dataArray = [
-				   (sensor.tag.denseTimestamps[index]*1000)-timezoneOffset, 
+				   // (sensor.tag.denseTimestamps[index]*1000)-timezoneOffset, 
+				    denseTimestamp-(index*60*1000),
 					sensor.tag.sensorID, 
 					sensor.tag.denseGRaw[index],
 					sensor.tag.denseTRaw[index],
@@ -135,6 +133,7 @@ export class HomePage {
 			];
 			console.log("Writing dense row - ", index," - ", dataArray);
 			return this.database.executeSql(insertSql, dataArray);
+
 		});
 
 		Promise.all(promises).then(() => console.log("Done writing dense rows."));
@@ -145,11 +144,14 @@ export class HomePage {
 		for(var i=0;i<sensor.tag.sparseGRaw.length;i++)
 			indices.push(i);
 
+		var sparseTimestamps = Date.now()-timezoneOffset-(1000*60*15);
+
 		promises = indices.map(index => {
 			if(sensor.tag.sparseGRaw[index] == null)
 				return Promise.resolve();
 			var dataArray = [
-				   (sensor.tag.sparseTimestamps[index]*1000)-timezoneOffset, 
+					sparseTimestamps-(index*1000*60*15),
+				   // (sensor.tag.sparseTimestamps[index]*1000)-timezoneOffset, 
 					sensor.tag.sensorID, 
 					sensor.tag.sparseGRaw[index],
 					sensor.tag.sparseTRaw[index],
@@ -338,7 +340,7 @@ export class HomePage {
 		});
 	}
 
-	getTrend() {
+	setTrend() {
 		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
 		var timeMin = Date.now()-timezoneOffset-(1000*60*15);
 
@@ -363,7 +365,6 @@ export class HomePage {
 
 			console.log("Gradient sum is ",gradientsum);
 			console.log("Gradient average is ",gradient);
-
 
 			var arrowDir = "level";
 
@@ -392,6 +393,8 @@ export class HomePage {
 			timeMin -=(1000*60*2);
 		else if(this.chartSetting == "5min")
 			timeMin -=(1000*60*5);
+		else if(this.chartSetting == "15min")
+			timeMin -=(1000*60*15);
 		else if(this.chartSetting == "hour")
 			timeMin -=(1000*60*60);
 		else if(this.chartSetting == "day")
@@ -402,8 +405,6 @@ export class HomePage {
 			timeMin -=(1000*60*60*24*30);
 
 		console.log("Chart setting is ",this.chartSetting,", Current time is ",Date.now()-timezoneOffset," looking for anything after ",timeMin);
-
-		this.getTrend();
 
 		console.log("yaxis - ",this.insulinChart.yAxis[0].addPlotLine);
 
@@ -465,10 +466,15 @@ export class HomePage {
 			console.log("Writing to divs...");
 			this.setTimeSince();
 		})
+
+		this.setTrend();
+
 	}
 
 	setArrow(direction) {
 		let arrow = <HTMLElement>document.querySelector(".arrowClass");
+
+		console.log("Setting arrow direction to ",direction);
 
 		if(direction == "up") {
 			arrow.style.transform = "rotate(-180deg)";
@@ -477,6 +483,7 @@ export class HomePage {
 			arrow.style.transform = "rotate(-135deg)";
 			arrow.style.color = "darkorange";
 		} else if(direction == "level") {
+			console.log("Level found");
 			arrow.style.transform = "rotate(-90deg)";
 			arrow.style.color = "green";
 		} else if(direction == "falling") {
