@@ -421,8 +421,9 @@ export class HomePage {
 			var chartData = []
 			for(var i=0;i<data.rows.length;i++) {
 				console.log("Row - ",i," - ",data.rows.item(i).estTimeStamp,", ",data.rows.item(i).gVal);
-				if(i != data.rows.length-1 && data.rows.getItem(i).estTimeStamp != data.rows.getItem(i+1).estTimeStamp) //Hacky fix, need to find a good solution - once we know the problem
-					chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
+				if(i < data.rows.length-1)
+					if (data.rows.item(i).estTimeStamp != data.rows.item(i+1).estTimeStamp) //Hacky fix, need to find a good solution - once we know the problem
+						chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
 			}
 			chartData = chartData.sort((n1, n2) => n1[0]-n2[0]);
 			this.insulinChart.series[0].setData(chartData, true);
