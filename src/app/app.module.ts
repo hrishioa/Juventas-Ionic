@@ -11,6 +11,7 @@ import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
 import { IonicStorageModule } from '@ionic/storage';
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
+import { ToastController } from 'ionic-angular';
 
 @NgModule({
   declarations: [
@@ -28,6 +29,7 @@ import { HomePage } from '../pages/home/home';
     HomePage
   ],
   providers: [
+    ToastController,
     SQLite, SQLitePorter,
     Toast,
     Vibration,

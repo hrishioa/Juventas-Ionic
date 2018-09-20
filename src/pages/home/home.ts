@@ -14,6 +14,7 @@ import { Storage } from '@ionic/storage';
 import { Platform } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { NavParams } from 'ionic-angular';
+import { ToastController } from 'ionic-angular';
 
 declare var cordova: any;
 
@@ -31,13 +32,19 @@ export class HomePage {
 
 	public timeSinceInsulin: string = "∞";
 	public timeSinceFood: string = "∞";
+	public lastInsulinTime: number = 0;
+	public lastFoodTime: number = 0;
 	insulinChart; 
 	insulinGauge;
 	private chartSetting: string;
 	database: SQLiteObject;
 	private databaseReady: BehaviorSubject<boolean>;
 
-	constructor(public navParams: NavParams, private statusBar: StatusBar, private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+	constructor(private toastCtrl: ToastController, public navParams: NavParams, private statusBar: StatusBar, private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+		setInterval(() => {
+			this.updateTimeSince();
+		}, 1000);
+
 		this.chartSetting = "day";
 		this.storage.get('chartSetting').then(val => {
 			if(val) 
@@ -68,8 +75,17 @@ export class HomePage {
 		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
 			console.log("Got sensor Data - writing to chart...");
 			this.writeToDatabase(sensor);
-			this.vibration.vibrate(1000);
 		});
+	}
+
+	sensorSuccess() {
+		this.vibration.vibrate(100);
+		console.log("Sensor read success.");
+	}
+
+	sensorFailure() {
+		this.vibration.vibrate(1000);
+		console.log("Sensor read failure.");
 	}
 
 	initDatabase() {
@@ -98,14 +114,27 @@ export class HomePage {
 	writeToDatabase(sensor) {
 		if(sensor.tag == null || sensor.tag.denseGRaw == null || (sensor.tag.denseGRaw.length == 0 && sensor.tag.sparseGRaw.length == 0)) {
 			console.log("No sensor read.");
+			this.sensorFailure();
 			return;
 		}
+
+		this.sensorSuccess();
 
 		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
 
 		var insertSql = 'INSERT INTO libreLogs(estTimeStamp,sensorID,gRaw,tRaw,tVal,gVal,type,readTime,sensorTime,drift) VALUES (?,?,?,?,?,?,?,?,?,?)'
 
 		console.log("Got sensor data - ",sensor);
+
+		var timeRemaining = Math.floor(((60*60*24*14)-sensor.tag.sensorTime)/(60*60*24));
+
+		let toast = this.toastCtrl.create({
+			message: timeRemaining+" days remaining on sensor",
+			duration: 3000,
+			position: 'bottom'
+		});
+
+		toast.present();
 
 		console.log("Writing data..");
 
@@ -172,6 +201,28 @@ export class HomePage {
 
 	}
 
+	updateTimeSince() {
+
+		console.log("updateTimeSince called - lastInsulinTime = ", this.lastInsulinTime, ", lastFoodTime - ", this.lastFoodTime);
+
+		var infinityChar = "∞";
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+
+		if(this.lastInsulinTime == 0) {
+			this.timeSinceInsulin = infinityChar;
+		} else {
+			this.timeSinceInsulin = this.getTime(Date.now()-timezoneOffset-this.lastInsulinTime);
+		}
+
+		if(this.lastFoodTime == 0) {
+			this.timeSinceFood = infinityChar;
+		} else {
+			this.timeSinceFood = this.getTime(Date.now()-timezoneOffset-this.lastFoodTime);
+		}
+
+		// setTimeout(this.updateTimeSince, 1000);
+	}
+
 	getTime(timeDiff) {
 		if(timeDiff < (60*1000))
 			return ""+(Math.floor((timeDiff%(60*1000))/1000))+"s";
@@ -187,6 +238,7 @@ export class HomePage {
 		timeDiff /= 7;
 		return ""+(Math.floor(timeDiff)%52)+"w";
 	}
+
 
 	initCharts() {
 		HighCharts.setOptions(highChartsUtils.glucoseGraphTheme);
@@ -206,10 +258,6 @@ export class HomePage {
 			title: {
 				text: null,
 			},
-			// subtitle: {
-			// 	text: document.ontouchstart === undefined ?
-			// 	'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-			// },
 			xAxis: {
 				type: 'datetime',
 				dateTimeLabelFormats: {
@@ -328,61 +376,139 @@ export class HomePage {
 	}
 
 	setTimeSince() {
-		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
-
 		this.database.executeSql("SELECT * FROM activityLogs WHERE action = ? ORDER BY timeStamp DESC LIMIT 1", ["insulin"]).then(data => {
 			if(data.rows.length > 0)
-				this.timeSinceInsulin = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
+				this.lastInsulinTime = data.rows.item(0).timeStamp;
+				// this.timeSinceInsulin = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
 		});
 		this.database.executeSql("SELECT * FROM activityLogs WHERE action = ? ORDER BY timeStamp DESC LIMIT 1", ["food"]).then(data => {
 			if(data.rows.length > 0)
-				this.timeSinceFood = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
+				this.lastFoodTime = data.rows.item(0).timeStamp;
+				// this.timeSinceFood = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
 		});
 	}
 
 	setTrend() {
-		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
-		var timeMin = Date.now()-timezoneOffset-(1000*60*15);
+		var gradientPeriod = (1000*60*5);
 
 		console.log("Calculating trendLine...");
 
-		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC", [timeMin]).then(data => {
-			if(data.rows.length == 0)
+		this.database.executeSql("SELECT * FROM libreLogs ORDER BY estTimeStamp DESC LIMIT 1", []).then(bigList => {
+			if(bigList.rows.length == 0)
 				return;
+			console.log("Top data point - ", bigList.rows.item(0));
+			this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp ASC", [bigList.rows.item(0).estTimeStamp-gradientPeriod]).then(data => {
 
-			var gradientsum = 0, gradientlen = 0;
-			for(var i=0;i<data.rows.length-1;i++) {
-				if(data.rows.item(i).estTimeStamp == data.rows.item(i+1).estTimeStamp) continue;
-				if(data.rows.item(i).gVal == data.rows.item(i+1).gVal) continue
-				var gradient = (data.rows.item(i).gVal-data.rows.item(i+1).gVal)/(data.rows.item(i).estTimeStamp-data.rows.item(i+1).estTimeStamp);
-				gradientsum -= gradient;
-				console.log("(",data.rows.item(i).gVal,'-',data.rows.item(i+1).gVal,')/(',data.rows.item(i).estTimeStamp,"-",data.rows.item(i+1).estTimeStamp,")");
-				console.log("Gradient - ",gradient);
-				gradientlen++;
-			}
+				if(data.rows.length == 0)
+					return;
 
-			var gradient = gradientsum/gradientlen;
+				console.log("Found ",data.rows.length, " data points.");
+				console.log("Second data point - ",data.rows.item(0))
 
-			console.log("Gradient sum is ",gradientsum);
-			console.log("Gradient average is ",gradient);
+				var arrowDir = "level";
 
-			var arrowDir = "level";
+				if(bigList.rows.item(0).estTimeStamp != data.rows.item(0).estTimeStamp) {
+					var gradient = (bigList.rows.item(0).gVal-data.rows.item(0).gVal)/(bigList.rows.item(0).estTimeStamp-data.rows.item(0).estTimeStamp);
+					console.log("(",bigList.rows.item(0).gVal,'-',data.rows.item(0).gVal,')/(',bigList.rows.item(0).estTimeStamp,"-",data.rows.item(0).estTimeStamp,")");
 
-			if(gradient >= 0.0005)
-				arrowDir = "up";
-			else if(gradient >= 0.0001)
-				arrowDir = "climbing";
-			else if(gradient < 0.0001 && gradient > -0.0001)
-				arrowDir = "level";
-			else if(gradient <= -0.0001)
-				arrowDir = "falling";
-			else if(gradient <= -0.0005)
-				arrowDir = "down";
+					console.log("Found a change of ",((bigList.rows.item(0).gVal-data.rows.item(0).gVal)), " in ", ((bigList.rows.item(0).estTimeStamp-data.rows.item(0).estTimeStamp)/(1000*60)), " minutes.");
 
-			console.log("Arrow direction is ",arrowDir);
+					if(Number.isFinite(gradient)) {
+						gradient *= 1000*60;
+						console.log("Gradient is ",gradient);
+						if(gradient >= 0.1)
+							arrowDir = "up";
+						else if(gradient >= 0.06)
+							arrowDir = "climbing";
+						else if(gradient < 0.06 && gradient > -0.06)
+							arrowDir = "level";
+						else if(gradient <= -0.06)
+							arrowDir = "falling";
+						else if(gradient <= -0.1)
+							arrowDir = "down";						
+					}
+				}
 
-			this.setArrow(arrowDir);
+				console.log("Arrow direction is "+arrowDir);
+
+				this.setArrow(arrowDir);
+
+				// console.log("Returned ",data.rows.length," points for the interval of ",(gradientPeriod/(1000*60))," minutes.");
+
+
+				// var gradientsum = 0, gradientlen = 0;
+				// for(var i=0;i<data.rows.length-1;i++) {
+				// 	if(data.rows.item(i).estTimeStamp == data.rows.item(i+1).estTimeStamp) continue;
+				// 	if(data.rows.item(i).gVal == data.rows.item(i+1).gVal) continue
+				// 	var gradient = (data.rows.item(i).gVal-data.rows.item(i+1).gVal)/(data.rows.item(i).estTimeStamp-data.rows.item(i+1).estTimeStamp);
+				// 	gradientsum -= gradient;
+				// 	console.log("(",data.rows.item(i).gVal,'-',data.rows.item(i+1).gVal,')/(',data.rows.item(i).estTimeStamp,"-",data.rows.item(i+1).estTimeStamp,")");
+				// 	console.log("Gradient - ",gradient);
+				// 	gradientlen++;
+				// }
+
+				// var gradient = gradientsum/gradientlen;
+
+				// console.log("Gradient sum is ",gradientsum);
+				// console.log("Gradient average is ",gradient);
+
+				// var arrowDir = "level";
+
+				// if(gradient >= 0.0005)
+				// 	arrowDir = "up";
+				// else if(gradient >= 0.0001)
+				// 	arrowDir = "climbing";
+				// else if(gradient < 0.0001 && gradient > -0.0001)
+				// 	arrowDir = "level";
+				// else if(gradient <= -0.0001)
+				// 	arrowDir = "falling";
+				// else if(gradient <= -0.0005)
+				// 	arrowDir = "down";
+
+				// console.log("Arrow direction is ",arrowDir);
+
+				// this.setArrow(arrowDir);
+
+			});
 		});
+
+		// this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC", [timeMin]).then(data => {
+		// 	if(data.rows.length == 0)
+		// 		return;
+
+		// 	var gradientsum = 0, gradientlen = 0;
+		// 	for(var i=0;i<data.rows.length-1;i++) {
+		// 		if(data.rows.item(i).estTimeStamp == data.rows.item(i+1).estTimeStamp) continue;
+		// 		if(data.rows.item(i).gVal == data.rows.item(i+1).gVal) continue
+		// 		var gradient = (data.rows.item(i).gVal-data.rows.item(i+1).gVal)/(data.rows.item(i).estTimeStamp-data.rows.item(i+1).estTimeStamp);
+		// 		gradientsum -= gradient;
+		// 		console.log("(",data.rows.item(i).gVal,'-',data.rows.item(i+1).gVal,')/(',data.rows.item(i).estTimeStamp,"-",data.rows.item(i+1).estTimeStamp,")");
+		// 		console.log("Gradient - ",gradient);
+		// 		gradientlen++;
+		// 	}
+
+		// 	var gradient = gradientsum/gradientlen;
+
+		// 	console.log("Gradient sum is ",gradientsum);
+		// 	console.log("Gradient average is ",gradient);
+
+		// 	var arrowDir = "level";
+
+		// 	if(gradient >= 0.0005)
+		// 		arrowDir = "up";
+		// 	else if(gradient >= 0.0001)
+		// 		arrowDir = "climbing";
+		// 	else if(gradient < 0.0001 && gradient > -0.0001)
+		// 		arrowDir = "level";
+		// 	else if(gradient <= -0.0001)
+		// 		arrowDir = "falling";
+		// 	else if(gradient <= -0.0005)
+		// 		arrowDir = "down";
+
+		// 	console.log("Arrow direction is ",arrowDir);
+
+		// 	this.setArrow(arrowDir);
+		// });
 	}
 
 	updateCharts() {
@@ -410,9 +536,6 @@ export class HomePage {
 
 		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC",[timeMin]).then(data => {
 			console.log("Returned ",data.rows.length," rows");
-			for(var i=0;i<data.rows.length;i++) {
-				console.log(data.rows.item(i));
-			}
 
 			if(data.rows.length == 0)
 				return;
@@ -421,7 +544,7 @@ export class HomePage {
 
 			var chartData = []
 			for(var i=0;i<data.rows.length;i++) {
-				console.log("Row - ",i," - ",data.rows.item(i).estTimeStamp,", ",data.rows.item(i).gVal);
+				// console.log("Row - ",i," - ",data.rows.item(i).estTimeStamp,", ",data.rows.item(i).gVal);
 				if(i < data.rows.length-1)
 					if (data.rows.item(i).estTimeStamp != data.rows.item(i+1).estTimeStamp) //Hacky fix, need to find a good solution - once we know the problem
 						chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
@@ -435,8 +558,6 @@ export class HomePage {
 
 		var insulinLabel = false;
 		var foodLabel = false;
-		var insulinDiv = false;
-		var foodDiv = false;
 
 		this.database.executeSql("SELECT * FROM activityLogs WHERE timeStamp >= ? ORDER BY timeStamp DESC", [timeMin]).then(data => {
 			console.log("Returned ",data.rows.length," activities.");
