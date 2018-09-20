@@ -12,6 +12,8 @@ import * as highChartsUtils from "./highchartsUtils";
 import { BehaviorSubject } from 'rxjs/Rx';
 import { Storage } from '@ionic/storage';
 import { Platform } from 'ionic-angular';
+import { StatusBar } from '@ionic-native/status-bar';
+import { NavParams } from 'ionic-angular';
 
 declare var cordova: any;
 
@@ -27,13 +29,15 @@ SolidGauge(HighCharts);
 })
 export class HomePage {
 
+	public timeSinceInsulin: string = "∞";
+	public timeSinceFood: string = "∞";
 	insulinChart; 
 	insulinGauge;
 	private chartSetting: string;
 	database: SQLiteObject;
 	private databaseReady: BehaviorSubject<boolean>;
 
-	constructor(private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
+	constructor(public navParams: NavParams, private statusBar: StatusBar, private platform: Platform, private storage: Storage, private sqlite: SQLite, private sqlitePorter: SQLitePorter, public vibration: Vibration, private toast: Toast, public navCtrl: NavController, private nfc: NFC, private ndef: Ndef) {
 		this.chartSetting = "day";
 		this.storage.get('chartSetting').then(val => {
 			if(val) 
@@ -56,6 +60,13 @@ export class HomePage {
 	}
 
 	ionViewDidLoad(){
+
+		// this.timeSinceInsulin = this.navParams.get('item').timeSinceInsulin;
+		this.statusBar.overlaysWebView(true);
+		// set status bar to white
+		this.statusBar.styleBlackTranslucent();
+		// this.statusBar.backgroundColorByHexString('#00b4db');
+
 
 		this.initCharts();
 
@@ -159,6 +170,22 @@ export class HomePage {
 
 	}
 
+	getTime(timeDiff) {
+		if(timeDiff < (60*1000))
+			return ""+(Math.floor((timeDiff%(60*1000))/1000))+"s";
+		timeDiff /= (60*1000);
+		if(timeDiff < 60)
+			return ""+(Math.floor(timeDiff%60)+"m");
+		timeDiff /= (60);
+		if(timeDiff < 24)
+			return ""+(Math.floor(timeDiff%24)+"h");
+		timeDiff /= (24);
+		if(timeDiff < 7)
+			return ""+(Math.floor(timeDiff%7)+"d");
+		timeDiff /= 7;
+		return ""+(Math.floor(timeDiff)%52)+"w";
+	}
+
 	initCharts() {
 		HighCharts.setOptions(highChartsUtils.glucoseGraphTheme);
 
@@ -186,16 +213,6 @@ export class HomePage {
 				dateTimeLabelFormats: {
 					day: ""
 				},
-			    plotLines: [{
-					color: 'red', // Color value
-					value: 1537397316000, // Value of where the line will appear
-					width: 2, // Width of the line
-					label: { 
-   						text: 'I am a label', // Content of the label. 
-    					align: 'left', // Positioning of the label. 
-    					x: +10 // Amount of pixels the label will be repositioned according to the alignment. 
-  					}    
-				}]
 			},
 			yAxis: {
 				max:15,
@@ -289,7 +306,7 @@ export class HomePage {
                 // 'style="color:green;transform:rotate(-90deg);"' + 
                 // 'style="color:darkorange;transform:rotate(-45deg);"' + 
                 // 'style="color:crimson;transform:rotate(0deg);"' + 
-                ' class="fas fa-2x fa-arrow-' + 
+                ' class="arrowClass fas fa-2x fa-arrow-' + 
                 // 'up' +  
                 'down' + 
                 '"></i></span></div>' +
@@ -306,6 +323,65 @@ export class HomePage {
 		this.chartSetting = setting;
 		console.log("called with ",setting, "Chart set to ",this.chartSetting,". Redrawing...");
 		this.updateCharts();
+	}
+
+	setTimeSince() {
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+
+		this.database.executeSql("SELECT * FROM activityLogs WHERE action = ? ORDER BY timeStamp DESC LIMIT 1", ["insulin"]).then(data => {
+			if(data.rows.length > 0)
+				this.timeSinceInsulin = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
+		});
+		this.database.executeSql("SELECT * FROM activityLogs WHERE action = ? ORDER BY timeStamp DESC LIMIT 1", ["food"]).then(data => {
+			if(data.rows.length > 0)
+				this.timeSinceFood = this.getTime(Date.now()-timezoneOffset-data.rows.item(0).timeStamp);	
+		});
+	}
+
+	getTrend() {
+		var timezoneOffset = ((new Date('August 19, 1975 23:15:30 GMT+07:00')).getTimezoneOffset())*60*1000;
+		var timeMin = Date.now()-timezoneOffset-(1000*60*15);
+
+		console.log("Calculating trendLine...");
+
+		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC", [timeMin]).then(data => {
+			if(data.rows.length == 0)
+				return;
+
+			var gradientsum = 0, gradientlen = 0;
+			for(var i=0;i<data.rows.length-1;i++) {
+				if(data.rows.item(i).estTimeStamp == data.rows.item(i+1).estTimeStamp) continue;
+				if(data.rows.item(i).gVal == data.rows.item(i+1).gVal) continue
+				var gradient = (data.rows.item(i).gVal-data.rows.item(i+1).gVal)/(data.rows.item(i).estTimeStamp-data.rows.item(i+1).estTimeStamp);
+				gradientsum -= gradient;
+				console.log("(",data.rows.item(i).gVal,'-',data.rows.item(i+1).gVal,')/(',data.rows.item(i).estTimeStamp,"-",data.rows.item(i+1).estTimeStamp,")");
+				console.log("Gradient - ",gradient);
+				gradientlen++;
+			}
+
+			var gradient = gradientsum/gradientlen;
+
+			console.log("Gradient sum is ",gradientsum);
+			console.log("Gradient average is ",gradient);
+
+
+			var arrowDir = "level";
+
+			if(gradient >= 0.0005)
+				arrowDir = "up";
+			else if(gradient >= 0.0001)
+				arrowDir = "climbing";
+			else if(gradient < 0.0001 && gradient > -0.0001)
+				arrowDir = "level";
+			else if(gradient <= -0.0001)
+				arrowDir = "falling";
+			else if(gradient <= -0.0005)
+				arrowDir = "down";
+
+			console.log("Arrow direction is ",arrowDir);
+
+			this.setArrow(arrowDir);
+		});
 	}
 
 	updateCharts() {
@@ -327,6 +403,8 @@ export class HomePage {
 
 		console.log("Chart setting is ",this.chartSetting,", Current time is ",Date.now()-timezoneOffset," looking for anything after ",timeMin);
 
+		this.getTrend();
+
 		console.log("yaxis - ",this.insulinChart.yAxis[0].addPlotLine);
 
 		this.database.executeSql("SELECT * FROM libreLogs WHERE estTimeStamp >= ? ORDER BY estTimeStamp DESC",[timeMin]).then(data => {
@@ -343,7 +421,8 @@ export class HomePage {
 			var chartData = []
 			for(var i=0;i<data.rows.length;i++) {
 				console.log("Row - ",i," - ",data.rows.item(i).estTimeStamp,", ",data.rows.item(i).gVal);
-				chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
+				if(i != data.rows.length-1 && data.rows.getItem(i).estTimeStamp != data.rows.getItem(i+1).estTimeStamp) //Hacky fix, need to find a good solution - once we know the problem
+					chartData.push([data.rows.item(i).estTimeStamp, data.rows.item(i).gVal]);
 			}
 			chartData = chartData.sort((n1, n2) => n1[0]-n2[0]);
 			this.insulinChart.series[0].setData(chartData, true);
@@ -354,11 +433,15 @@ export class HomePage {
 
 		var insulinLabel = false;
 		var foodLabel = false;
+		var insulinDiv = false;
+		var foodDiv = false;
 
 		this.database.executeSql("SELECT * FROM activityLogs WHERE timeStamp >= ? ORDER BY timeStamp DESC", [timeMin]).then(data => {
 			console.log("Returned ",data.rows.length," activities.");
 
 			for(var i=0;i<data.rows.length;i++) {
+				console.log(data.rows.item(i));
+
 				var plotline = {
 					color: (data.rows.item(i).action == 'insulin' ? 'red':'green'),
 					width:2,
@@ -373,22 +456,40 @@ export class HomePage {
 					}
 				};
 
-				if(data.rows.item(i).action == "insulin")
-					insulinLabel = true;
-				if(data.rows.item(i).action != "insulin")
-					foodLabel = true;
-
 				this.insulinChart.xAxis[0].addPlotLine(plotline);
 
 				console.log("Added plotline - ",plotline);
 			}
+
+			console.log("Writing to divs...");
+			this.setTimeSince();
 		})
+	}
+
+	setArrow(direction) {
+		let arrow = <HTMLElement>document.querySelector(".arrowClass");
+
+		if(direction == "up") {
+			arrow.style.transform = "rotate(-180deg)";
+			arrow.style.color = "crimson";
+		} else if(direction == "climbing") {
+			arrow.style.transform = "rotate(-135deg)";
+			arrow.style.color = "darkorange";
+		} else if(direction == "level") {
+			arrow.style.transform = "rotate(-90deg)";
+			arrow.style.color = "green";
+		} else if(direction == "falling") {
+			arrow.style.transform = "rotate(-45deg)";
+			arrow.style.color = "darkorange";
+		} else if(direction == "down") {
+			arrow.style.transform = "rotate(0deg)";
+			arrow.style.color = "crimson";
+		}
 	}
 
 	buttonTester() {
 		console.log("Logging database...");
 			this.sqlitePorter.exportDbToJson(this.database).then(console.log, console.log);
-
 	}
 
 	takeInsulin() {
@@ -398,6 +499,8 @@ export class HomePage {
 		this.database.executeSql(insertSql, [Date.now()-timezoneOffset, "insulin", ""]).then(data => {
 			this.toast.show("Logged Insulin",'1000','center').subscribe(console.log);
 		});
+
+		this.setTimeSince();
 	}
 
 	takeFood() {
@@ -407,6 +510,8 @@ export class HomePage {
 		this.database.executeSql(insertSql, [Date.now()-timezoneOffset, "food", ""]).then(data => {
 			this.toast.show("Logged Food",'1000','center').subscribe(console.log);
 		}).catch(err => console.log("Error - ",err));
+
+		this.setTimeSince();
 	}
 
 	wipeDb() {
