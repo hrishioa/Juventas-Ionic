@@ -29,7 +29,7 @@
     "@ionic-native/toast": "^4.14.0",
     "@ionic-native/vibration": "^4.14.0",
     "@ionic/storage": "^2.1.3",
-    "GlucoseFreedom": "file:../plugins/GlucoseFreedom",
+    "GlucoseFreedom": "file:GlucoseFreedom",
     "cordova-android": "7.0.0",
     "cordova-plugin-device": "^2.0.2",
     "cordova-plugin-ionic-keyboard": "^2.1.2",

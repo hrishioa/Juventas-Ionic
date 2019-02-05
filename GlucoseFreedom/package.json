@@ -1,0 +1,17 @@
+{
+  "name": "GlucoseFreedom",
+  "version": "0.0.1",
+  "description": "Freestyle Libre plugin for Cordova and Ionic",
+  "cordova": {
+    "id": "cordova.plugin.glucosefreedom",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Hrishi Olickel",
+  "license": "ISC"
+}

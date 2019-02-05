@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova.plugin.glucosefreedom" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>GlucoseFreedom</name>
+	<js-module name="GlucoseFreedom" src="www/GlucoseFreedom.js">
+		<clobbers target="cordova.plugins.GlucoseFreedom" />
+	</js-module>
+	<platform name="android">
+		<config-file parent="/*" target="res/xml/config.xml">
+			<feature name="GlucoseFreedom">
+				<param name="android-package" value="cordova.plugin.glucosefreedom.GlucoseFreedom" />
+			</feature>
+		</config-file>
+		<config-file parent="/*" target="AndroidManifest.xml"></config-file>
+		<source-file src="src/android/GlucoseFreedom.java" target-dir="src/cordova/plugin/glucosefreedom/GlucoseFreedom" />
+		<source-file src="src/android/SensorReaderTask.java" target-dir="src/cordova/plugin/glucosefreedom/GlucoseFreedom" />
+	</platform>
+</plugin>
