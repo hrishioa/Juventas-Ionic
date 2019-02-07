@@ -18,7 +18,7 @@ First, clone the repository
 git clone https://github.com/hrishioa/Juventas-Ionic
 ```
 
-![git clone](https://raw.githubusercontent.com/hrishioa/Juventas-Ionic/commits/master/images/git.gif)
+![git clone](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/git.gif)
 
 Next, install the custom plugin
 ```bash
