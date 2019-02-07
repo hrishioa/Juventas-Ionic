@@ -25,15 +25,21 @@ Next, install the custom plugin
 ionic cordova plugin add GlucoseFreedom
 ```
 
+![plugin](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/plugin.gif)
+
 Install the npm packages
 ```bash
-npm i
+npm install
 ```
+
+![npm](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/npm.gif)
 
 Build and run the app (connect an android device or have an emulator ready)
 ```bash
 ionic cordova run android --device
 ```
+
+![build](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/build.gif)
 
 ## License
 
