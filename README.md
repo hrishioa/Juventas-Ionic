@@ -18,6 +18,8 @@ First, clone the repository
 git clone https://github.com/hrishioa/Juventas-Ionic
 ```
 
+![git clone](https://raw.githubusercontent.com/hrishioa/Juventas-Ionic/commits/master/images/git.gif)
+
 Next, install the custom plugin
 ```bash
 ionic cordova plugin add GlucoseFreedom
@@ -42,4 +44,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * The requisite projects
 * [Hebe Hilhorst](https://github.com/hebehh) for assisting with the reverse engineering and being the first user
 * [Parag Bhatnagar](https://github.com/paragbhtngr) for design
-
