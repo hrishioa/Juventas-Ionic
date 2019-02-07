@@ -15,22 +15,22 @@ Juventas is a glucose measurement system that can read values from the Freestyle
 First, clone the repository
 
 ```bash
-	git clone https://github.com/hrishioa/Juventas-Ionic
+git clone https://github.com/hrishioa/Juventas-Ionic
 ```
 
 Next, install the custom plugin
 ```bash
-	ionic cordova plugin add GlucoseFreedom
+ionic cordova plugin add GlucoseFreedom
 ```
 
 Install the npm packages
 ```bash
-	npm i
+npm i
 ```
 
 Build and run the app (connect an android device or have an emulator ready)
 ```bash
-	ionic cordova run android --device
+ionic cordova run android --device
 ```
 
 ## License
