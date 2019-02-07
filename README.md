@@ -2,8 +2,8 @@
 
 Juventas is a glucose measurement system that can read values from the Freestyle Libre sensor using NfcV. Currently only supports Android, but any iOS developers are welcome to help!
 
+<img src="https://github.com/hrishioa/Juventas-Ionic/raw/master/images/screenshot1.jpg">
 
-![Screenshot 1](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/screenshot1.jpg) ![Screenshot 2](https://github.com/hrishioa/Juventas-Ionic/raw/master/images/screenshot2.jpg)
 
 ### Prerequisites
 
