@@ -72,6 +72,8 @@ export class HomePage {
 
 		this.initCharts();
 
+		console.log("cordova.plugin is ",cordova.plugin)
+
 		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
 			console.log("Got sensor Data - writing to chart...");
 			this.writeToDatabase(sensor);
@@ -366,6 +368,10 @@ export class HomePage {
             	valueSuffix: ' mmol/L'
             } }]    
         }));
+	}
+
+	showConfig() {
+		
 	}
 
 	setChartSetting(setting) {
