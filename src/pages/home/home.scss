@@ -24,13 +24,25 @@
 	border-radius: 16px;
 }
 
+.chart-card {
+	flex-grow: 35;
+	position: relative;
+}
+
+.settings-button {
+	// display: none;
+	right:0;
+	font-size: 1em;
+	position: absolute;
+	z-index:2;
+	margin: 10px;
+	color: black;
+	padding:0; border-radius: 50px; padding:0px 10px 0px 10px;
+}
+
 #card1 {
 	flex-grow: 25;
 	margin-bottom: 20px;
-}
-
-#card2 {
-	flex-grow: 35;
 }
 
 .details {
@@ -92,9 +104,10 @@
 	display: flex;
 	width: 100%;
 	justify-content: space-around;
+	margin-bottom: 5px;
 	.button {
 		width: 30%;
-		height: 40px;
+		height: 30px;
 	}
 	.input-wrapper {
 		.label {
@@ -110,10 +123,12 @@
 	height: 25vh;
 }
 
-#container {
+.chart-container {
 	display: block; 
 	height: calc(67vh - 200px);
+	padding-top: 10px;
 }
+
 
 @media screen and (orientation: landscape) {
 	.wrapper {
@@ -123,7 +138,7 @@
 		}
 	}
 
-	.card, #card1, #card2 {
+	.card, .chart-card, #card1 {
 		flex-grow: 25;
 		margin: 10px;
 	}
@@ -133,7 +148,7 @@
 		height: 60vh;
 	}
 	
-	#container {
+	.chart-container {
 		display: block;
 		height: calc(100vh - 135px);
 	}

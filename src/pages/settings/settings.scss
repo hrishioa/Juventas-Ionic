@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css?family=Rajdhani:300,400,500,600,700');
+
+$font-family-base: "Oxygen", sans-serif !default;
+
+.toolbar-background {
+  background-color: #00b4db;
+}
+
+.page-settings {
+	font-family: 'Rajdhani', sans-serif;
+
+}
+
+.settings-label {
+	padding: 5px 0 5px 0;
+	vertical-align: middle;
+	font-size: 1.2em;
+
+}
+
+.settings-content {
+	font-family: 'Rajdhani', sans-serif;
+}
+
+.item-divider {
+	border-style: none;
+}

@@ -2,11 +2,6 @@
 </ion-header>
 
 <ion-content padding class="wrapper">
-	<!-- <button ion-button full (click)="setArrow('climbing')">Spare button</button> -->
-	<!-- <button ion-button full (click)="setArrow('level')">Spare button</button> -->
-	<!-- <button ion-button full (click)="setArrow('falling')">Spare button</button> -->
-	<!-- <button ion-button full (click)="setArrow('down')">Spare button</button> -->
-	<!-- <button ion-button full (click)="wipeDb()">Wipe Database</button> -->
 	<div style="padding-top:25px;"></div>
 	<ion-card class="card" id="card1">
 		<ion-card-content>
@@ -16,26 +11,28 @@
 				<span class="title">{{timeSinceInsulin}}</span>
 				<span class="subtitle">since Insulin</span>
 				</button>
-				<!-- <h2>4h</h2> -->
 				
 				<button ion-button large class="button button-circle" (click)="takeFood()">
 					<span class="title">{{timeSinceFood}}</span>
 					<span class="subtitle">since last meal</span>
 				</button>
-				<!-- <h2>2h</h2> -->
 			</div>
 		</ion-card-content>
 	</ion-card>
 
-	<ion-card class="card" id="card2">
+	<ion-card class="card chart-card" id="card2">
+		<button ion-button large class="button settings-button" style="background-color: white" (click)="showSettings()">
+			<span style="">
+				<i class="fas fa-cogs"></i>
+			</span>
+		</button>
 		<ion-card-content style="padding-bottom: 0px;">
-			<div id="container"></div>
+			<div id="container" class="chart-container"></div>
 		</ion-card-content>
 		<ion-item id="button-grid">
 			<button ion-button large class="button" (click)="setChartSetting('15min')">15Min</button>
 			<button ion-button large class="button" (click)="setChartSetting('hour')">Hour</button>
 			<button ion-button large class="button" (click)="setChartSetting('day')">Day</button>
-			<button ion-button large class="button" (click)="showConfig()">S</button>
 		</ion-item>
 	</ion-card>
 

@@ -1,0 +1,96 @@
+<ion-header>
+
+	<ion-navbar>
+		<ion-title>Settings</ion-title>
+	</ion-navbar>
+
+</ion-header>
+
+
+<ion-content class="settings-content" padding>
+	<ion-list lines="none">
+		<ion-item-divider class="item-divider">
+			<ion-label style="padding-bottom:0; margin-bottom:0; margin-top: 10px">
+				Graph Options
+			</ion-label>
+		</ion-item-divider>
+		<ion-item>
+			<ion-label color="dark" class="settings-label">Upper Limit</ion-label>
+			<ion-input placeholder={{graphUpperLimit}} text-right></ion-input>
+		</ion-item>
+
+		<ion-item>
+			<ion-label color="dark" class="settings-label">Lower Limit</ion-label>
+			<ion-input placeholder={{graphLowerLimit}} text-right></ion-input>
+		</ion-item>
+		<ion-item>
+			<ion-label color="dark" class="settings-label">Upper Line</ion-label>
+			<ion-input placeholder={{graphUpperLine}} text-right></ion-input>
+		</ion-item>
+		<ion-item>
+			<ion-label color="dark" class="settings-label">Lower Line</ion-label>
+			<ion-input placeholder={{graphLowerLine}} text-right></ion-input>
+		</ion-item>
+		<ion-item-divider class="item-divider">
+			<ion-label style="padding-bottom:0; margin-bottom:0; margin-top: 20px">
+				Time selection
+			</ion-label>
+		</ion-item-divider>
+		<ion-item>
+			<ion-label class="settings-label" color="dark">Left</ion-label>
+			<ion-select placeholder={{leftButtonSetting}}>
+				<ion-option value="2min">2 Minutes</ion-option>
+				<ion-option value="5min">5 Minutes</ion-option>
+				<ion-option value="15min">15 Minutes</ion-option>
+				<ion-option value="hour">1 Hour</ion-option>
+				<ion-option value="day">1 Day</ion-option>
+				<ion-option value="week">7 Days</ion-option>
+				<ion-option value="month">30 Days</ion-option>
+			</ion-select>
+		</ion-item>
+		<ion-item>
+			<ion-label class="settings-label" color="dark">Middle</ion-label>
+			<ion-select [(ngModel)]="unit" placeholder={{middleButtonSetting}}>
+				<ion-option value="2min">2 Minutes</ion-option>
+				<ion-option value="5min">5 Minutes</ion-option>
+				<ion-option value="15min">15 Minutes</ion-option>
+				<ion-option value="hour">1 Hour</ion-option>
+				<ion-option value="day">1 Day</ion-option>
+				<ion-option value="week">7 Days</ion-option>
+				<ion-option value="month">30 Days</ion-option>
+			</ion-select>
+		</ion-item>
+		<ion-item>
+			<ion-label class="settings-label" color="dark">Right</ion-label>
+			<ion-select [(ngModel)]="unit" placeholder={{rightButtonSetting}}>
+				<ion-option value="2min">2 Minutes</ion-option>
+				<ion-option value="5min">5 Minutes</ion-option>
+				<ion-option value="15min">15 Minutes</ion-option>
+				<ion-option value="hour">1 Hour</ion-option>
+				<ion-option value="day">1 Day</ion-option>
+				<ion-option value="week">7 Days</ion-option>
+				<ion-option value="month">30 Days</ion-option>
+			</ion-select>
+		</ion-item>
+		<ion-item-divider class="item-divider">
+			<ion-label style="padding-bottom:0; margin-bottom:0; margin-top: 20px">
+				Miscellaneous
+			</ion-label>
+		</ion-item-divider>
+		<ion-item>
+			<ion-label class="settings-label">Download CSV</ion-label>
+		</ion-item>
+		<ion-item>
+			<ion-label class="settings-label" color="dark">Units</ion-label>
+			<!-- 			Make sure to change the upper and lower limits when you change units -->
+			<ion-select  placeholder={{units}} [(ngModel)]="units" name="units" (ionChange)="unitsChanged()" ngDefaultControl>
+				<ion-option value="mg/dL">mg/dL</ion-option>
+				<ion-option value="mmol/L">mmol/L</ion-option>
+			</ion-select>
+		</ion-item>
+		<ion-item>
+			<ion-label color="dark" class="settings-label" style="font-size: 0.8em">Phone Home</ion-label>
+			<ion-toggle slot="end"></ion-toggle>
+		</ion-item>
+	</ion-list>
+</ion-content>
