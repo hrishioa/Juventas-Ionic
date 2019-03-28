@@ -11,6 +11,10 @@ log.txt
 *.sublime-workspace
 .vscode/
 npm-debug.log*
+*.map
+
+my-release-key.keystore
+splash.original.png
 
 .idea/
 .ionic/
