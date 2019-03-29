@@ -16,20 +16,20 @@
 		</ion-item-divider>
 		<ion-item>
 			<ion-label color="dark" class="settings-label">Upper Limit</ion-label>
-			<ion-input placeholder={{graphUpperLimit}} text-right></ion-input>
+			<ion-input placeholder={{graphUpperLimit}} text-right [(ngModel)]="graphUpperLimit" name="graphUpperLimit" (ionChange)="graphValuesChanged()"></ion-input>
 		</ion-item>
 
 		<ion-item>
 			<ion-label color="dark" class="settings-label">Lower Limit</ion-label>
-			<ion-input placeholder={{graphLowerLimit}} text-right></ion-input>
+			<ion-input placeholder={{graphLowerLimit}} text-right [(ngModel)]="graphLowerLimit" name="graphLowerLimit" (ionChange)="graphValuesChanged()"></ion-input>
 		</ion-item>
 		<ion-item>
 			<ion-label color="dark" class="settings-label">Upper Line</ion-label>
-			<ion-input placeholder={{graphUpperLine}} text-right></ion-input>
+			<ion-input placeholder={{graphUpperLine}} text-right [(ngModel)]="graphUpperLine" name="graphUpperLine" (ionChange)="graphValuesChanged()"></ion-input>
 		</ion-item>
 		<ion-item>
 			<ion-label color="dark" class="settings-label">Lower Line</ion-label>
-			<ion-input placeholder={{graphLowerLine}} text-right></ion-input>
+			<ion-input placeholder={{graphLowerLine}} text-right [(ngModel)]="graphLowerLine" name="graphLowerLine" (ionChange)="graphValuesChanged()"></ion-input>
 		</ion-item>
 		<ion-item-divider class="item-divider">
 			<ion-label style="padding-bottom:0; margin-bottom:0; margin-top: 20px">
@@ -83,7 +83,7 @@
 		<ion-item>
 			<ion-label class="settings-label" color="dark">Units</ion-label>
 			<!-- 			Make sure to change the upper and lower limits when you change units -->
-			<ion-select  placeholder={{units}} [(ngModel)]="units" name="units" (ionChange)="unitsChanged()" ngDefaultControl>
+			<ion-select  placeholder={{graphUnits}} [(ngModel)]="graphUnits" name="graphUnits" (ionChange)="unitsChanged()">
 				<ion-option value="mg/dL">mg/dL</ion-option>
 				<ion-option value="mmol/L">mmol/L</ion-option>
 			</ion-select>
