@@ -12,14 +12,14 @@ import { ToastController } from 'ionic-angular';
 })
 export class SettingsPage {
 
-	public graphUpperLimit = 4.0;
-	public graphLowerLimit = 7.0;
-	public graphUpperLine = 4.0;
-	public graphLowerLine = 7.0;
+	public graphUpperLimit = 10.0;
+	public graphLowerLimit = 1.0;
+	public graphUpperLine = 7.0;
+	public graphLowerLine = 4.0;
 	public leftButtonSetting = "1 Day";
 	public middleButtonSetting = "30 Min";
 	public rightButtonSetting = "15 Min";
-	public graphUnits = "mg/dL";
+	public graphUnits = "mmol/L";
 	public loadedSettings = false;
 
 	constructor(public navCtrl: NavController, public toastCtrl: ToastController, public toast: Toast, public navParams: NavParams, private storage: Storage, private statusBar: StatusBar) {
@@ -115,13 +115,6 @@ export class SettingsPage {
 			console.log("Not writing because settings are still loading...");
 			return;
 		}
-
-		// let toast = this.toastCtrl.create({
-		// 	message: "Graph values updated",
-		// 	duration: 1000,
-		// 	position: 'bottom'
-		// });
-		// toast.present();
 
 		if(this.graphUnits == 'mg/dL') {
 			console.log("Writing mgdl - ",this.graphUpperLimit*0.0555,",",(this.graphLowerLimit*0.0555),",",(this.graphUpperLine*0.0555),",",this.graphLowerLine*0.0555);
