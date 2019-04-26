@@ -3,6 +3,8 @@ import { NavController } from 'ionic-angular';
 import * as HighCharts from 'highcharts';
 import HighChartsMore from "highcharts/highcharts-more";
 import SolidGauge from 'highcharts/modules/solid-gauge';
+import { Chart } from 'chart.js';
+import { ViewChild } from '@angular/core';
 
 // WEB DISABLE
 import { Toast } from '@ionic-native/toast';
@@ -20,6 +22,7 @@ import { Platform } from 'ionic-angular';
 import { NavParams } from 'ionic-angular';
 import { ToastController } from 'ionic-angular';
 import { SettingsPage } from '../settings/settings';
+import { global } from '@angular/core/src/util';
 
 // WEB DISABLE
 declare var cordova: any;
@@ -38,6 +41,10 @@ var globalGraphUnits = "mmol/L";
 	templateUrl: 'home.html'
 })
 export class HomePage {
+	@ViewChild('lineCanvas') lineCanvas;
+
+	barChart: any;
+
 	public graphUpperLimit = 4.0;
 	public graphLowerLimit = 7.0;
 	public graphUpperLine = 4.0;
@@ -124,6 +131,7 @@ export class HomePage {
 	}
 
 	ionViewDidLoad(){
+
 		// WEB DISABLE
 		this.statusBar.overlaysWebView(true);
 		this.statusBar.styleBlackTranslucent();
@@ -133,10 +141,11 @@ export class HomePage {
 		// WEB DISABLE
 		console.log("cordova.plugin is ",cordova.plugin);
 
-		cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
-			console.log("Got sensor Data - writing to chart...");
-			this.writeToDatabase(sensor);
-		});
+		if(cordova.plugins)
+			cordova.plugins.GlucoseFreedom.registerSensorListener((sensor) => {
+				console.log("Got sensor Data - writing to chart...");
+				this.writeToDatabase(sensor);
+			});
 	}
 
 	sensorSuccess() {
@@ -306,6 +315,15 @@ export class HomePage {
 		if(this.insulinChart)
 			this.insulinChart.destroy();
 		this.insulinChart = HighCharts.chart('container', {
+			tooltip: {
+				formatter: function () {
+					if(globalGraphUnits == "mg/dL") {
+						return (this.y*18.018018).toFixed(2)+' '+globalGraphUnits;
+					} else {
+						return (this.y).toFixed(2)+' '+globalGraphUnits;
+					}
+				}
+			},
 			credits: {
 				enabled: false
 			},
@@ -381,7 +399,7 @@ export class HomePage {
 			},
 
 			series: [{
-				type: 'line',
+				type: 'spline',
 				name: 'All',
 				data: [[1536938640, 9.412], [1536938580, 9.331], [1536938520, 9.301], [1536938460, 9.2], [1536938400, 9.17], [1536938340, 9.1], [1536938280, 9.13], [1536938248, 9.503], [1536938188, 9.452], [1536938128, 9.744], [1536938068, 9.593], [1536938008, 9.623], [1536937948, 9.865], [1536937888, 9.976], [1536937828, 9.825], [1536937768, 9.996], [1536937708, 9.956], [1536937648, 9.835], [1536937588, 9.734], [1536937528, 9.704]],
 				lineWidth: 2,
@@ -393,11 +411,7 @@ export class HomePage {
 					color: '#90ed7d'
 				}, {
 					color: '#7cb5ec'
-				}],
-				tooltip: {
-					valueSuffix: ' '+this.graphUnits,
-					valueDecimals: '2'
-				}
+				}]
 			}]
 		});  
 
@@ -615,7 +629,7 @@ export class HomePage {
 
 		console.log("Chart setting is ",this.chartSetting,", Current time is ",Date.now()-timezoneOffset," looking for anything after ",timeMin);
 
-		console.log("yaxis - ",this.insulinChart.yAxis[0].addPlotLine);
+		// console.log("yaxis - ",this.insulinChart.yAxis[0].addPlotLine);
 
 		this.database.executeSql("SELECT * FROM libreLogs ORDER BY estTimeStamp DESC LIMIT 1", []).then(pointRow => {
 
